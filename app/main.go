@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -12,12 +14,30 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			continue
+		}
+		go handleConnection(conn)
 	}
+}
+
+func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	conn.Write([]byte("+PONG\r\n"))
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		command := strings.TrimSpace(scanner.Text())
+
+		if strings.Contains(strings.ToUpper(command), "PING") {
+			conn.Write([]byte("+PONG\r\n"))
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("Error reading from connection: %v\n", err)
+	}
 }

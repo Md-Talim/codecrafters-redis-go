@@ -34,6 +34,7 @@ func handleConnection(conn net.Conn) {
 
 	commandMap := map[string]Command{
 		"PING": &commands.PingCommand{},
+		"ECHO": &commands.EchoCommand{},
 	}
 
 	for {

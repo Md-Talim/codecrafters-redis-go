@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/md-talim/codecrafters-redis-go/internal/storage"
 	"github.com/md-talim/codecrafters-redis-go/pkg/commands"
 	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
@@ -17,17 +18,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	memoryStorage := storage.NewMemoryStorage()
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
 			continue
 		}
-		go handleConnection(conn)
+		go handleConnection(conn, memoryStorage)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, storage storage.Storage) {
 	defer conn.Close()
 
 	parser := resp.NewParser(conn)
@@ -35,6 +38,8 @@ func handleConnection(conn net.Conn) {
 	commandMap := map[string]Command{
 		"PING": &commands.PingCommand{},
 		"ECHO": &commands.EchoCommand{},
+		"SET":  commands.NewSetCommand(storage),
+		"GET":  commands.NewGetCommand(storage),
 	}
 
 	for {

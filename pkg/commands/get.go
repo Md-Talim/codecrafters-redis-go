@@ -15,11 +15,11 @@ func NewGetCommand(storage storage.Storage) *GetCommand {
 
 func (g *GetCommand) Execute(args []resp.Value) *resp.Value {
 	if len(args) != 1 {
-		return resp.NewSimpleError("ERR wrong number of arguments for 'get' command")
+		return WrongNumberOfArgumentsError("get")
 	}
 
 	if args[0].Type != resp.BulkString {
-		return resp.NewSimpleError("ERR invalid argument Type")
+		return InvalidArgumentTypeError()
 	}
 
 	key := args[0].Bulk

@@ -52,7 +52,7 @@ func handleConnection(conn net.Conn, storage storage.Storage) {
 		}
 
 		if value.Type != resp.Array || len(value.Array) == 0 {
-			conn.Write([]byte(resp.NewSimpleError("ERR invalid command format").Serialize()))
+			conn.Write([]byte(commands.InvalidCommandFormatError().Serialize()))
 			continue
 		}
 
@@ -63,7 +63,7 @@ func handleConnection(conn net.Conn, storage storage.Storage) {
 			response := cmd.Execute(args)
 			conn.Write([]byte(response.Serialize()))
 		} else {
-			conn.Write([]byte(resp.NewSimpleError("ERR unknown command").Serialize()))
+			conn.Write([]byte(commands.UnknownCommandError(commandName).Serialize()))
 		}
 	}
 }

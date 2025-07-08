@@ -6,11 +6,11 @@ type EchoCommand struct{}
 
 func (e *EchoCommand) Execute(args []resp.Value) *resp.Value {
 	if len(args) != 1 {
-		return resp.NewSimpleError("ERR wrong number of arguments for 'echo' command")
+		return WrongNumberOfArgumentsError("echo")
 	}
 
 	if args[0].Type != resp.BulkString {
-		return resp.NewSimpleError("ERR invalid argument type")
+		return InvalidArgumentTypeError()
 	}
 
 	return resp.NewBulkString(args[0].Bulk)

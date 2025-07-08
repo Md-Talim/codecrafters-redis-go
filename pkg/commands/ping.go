@@ -13,7 +13,7 @@ func (p *PingCommand) Execute(args []resp.Value) *resp.Value {
 		return resp.NewBulkString(args[0].Bulk)
 	}
 
-	return resp.NewSimpleError("ERR wrong number of arguments for 'ping' command")
+	return WrongNumberOfArgumentsError("ping")
 }
 
 func (p *PingCommand) Name() string {

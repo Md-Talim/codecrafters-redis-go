@@ -19,11 +19,11 @@ func NewSetCommand(storage storage.Storage) *SetCommand {
 
 func (s *SetCommand) Execute(args []resp.Value) *resp.Value {
 	if len(args) < 2 {
-		return resp.NewSimpleError("ERR wrong number of arguments for 'set' command")
+		return WrongNumberOfArgumentsError("set")
 	}
 
 	if args[0].Type != resp.BulkString || args[1].Type != resp.BulkString {
-		return resp.NewSimpleError("Err invalid argument type")
+		return InvalidArgumentTypeError()
 	}
 
 	key := args[0].Bulk
@@ -34,30 +34,30 @@ func (s *SetCommand) Execute(args []resp.Value) *resp.Value {
 
 	for i := 2; i < len(args); i++ {
 		if args[i].Type != resp.BulkString {
-			return resp.NewSimpleError("ERR invalid argument type")
+			return InvalidArgumentTypeError()
 		}
 
 		arg := strings.ToUpper(args[i].Bulk)
 		switch arg {
 		case "PX":
 			if i+1 >= len(args) {
-				return resp.NewSimpleError("ERR syntax error")
+				return SyntaxError()
 			}
 
 			if args[i+1].Type != resp.BulkString {
-				return resp.NewSimpleError("ERR invalid argument type")
+				return InvalidArgumentTypeError()
 			}
 
 			milliseconds, err := strconv.ParseInt(args[i+1].Bulk, 10, 64)
 			if err != nil || milliseconds <= 0 {
-				return resp.NewSimpleError("ERR invalid expire time in 'set' command")
+				return InvalidExpireTimeError("set")
 			}
 
 			expiry = time.Duration(milliseconds) * time.Millisecond
 			hasExpiry = true
 			i++
 		default:
-			return resp.NewSimpleError("ERR syntax error")
+			return SyntaxError()
 		}
 	}
 

@@ -1,11 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"os"
 	"strings"
+
+	"github.com/md-talim/codecrafters-redis-go/pkg/commands"
+	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
 
 func main() {
@@ -28,16 +30,39 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		command := strings.TrimSpace(scanner.Text())
+	parser := resp.NewParser(conn)
 
-		if strings.Contains(strings.ToUpper(command), "PING") {
-			conn.Write([]byte("+PONG\r\n"))
+	commandMap := map[string]Command{
+		"PING": &commands.PingCommand{},
+	}
+
+	for {
+		value, err := parser.Parse()
+		if err != nil {
+			if err.Error() != "EOF" {
+				fmt.Printf("Error parsing: %v\n", err)
+			}
+			break
+		}
+
+		if value.Type != resp.Array || len(value.Array) == 0 {
+			conn.Write([]byte(resp.NewSimpleError("ERR invalid command format").Serialize()))
+			continue
+		}
+
+		commandName := strings.ToUpper(value.Array[0].Bulk)
+		args := value.Array[1:]
+
+		if cmd, exists := commandMap[commandName]; exists {
+			response := cmd.Execute(args)
+			conn.Write([]byte(response.Serialize()))
+		} else {
+			conn.Write([]byte(resp.NewSimpleError("ERR unknown command").Serialize()))
 		}
 	}
+}
 
-	if err := scanner.Err(); err != nil {
-		fmt.Printf("Error reading from connection: %v\n", err)
-	}
+type Command interface {
+	Execute(args []resp.Value) *resp.Value
+	Name() string
 }

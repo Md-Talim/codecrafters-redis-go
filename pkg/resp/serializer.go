@@ -13,6 +13,12 @@ func (v *Value) Serialize() string {
 		return fmt.Sprintf("$%d%s%s%s", len(v.Bulk), CRLF, v.Bulk, CRLF)
 	case SimpleError:
 		return fmt.Sprintf("-%s%s", v.String, CRLF)
+	case Array:
+		result := fmt.Sprintf("*%d%s", len(v.Array), CRLF)
+		for _, item := range v.Array {
+			result += item.Serialize()
+		}
+		return result
 	default:
 		return ""
 	}
@@ -32,4 +38,8 @@ func NewSimpleError(message string) *Value {
 
 func NewNullBulkString() *Value {
 	return &Value{Type: BulkString, Bulk: "", String: "null"}
+}
+
+func NewArray(values []Value) *Value {
+	return &Value{Type: Array, Array: values}
 }

@@ -6,13 +6,17 @@ import (
 	"os"
 	"strings"
 
+	"github.com/md-talim/codecrafters-redis-go/internal/config"
 	"github.com/md-talim/codecrafters-redis-go/internal/storage"
 	"github.com/md-talim/codecrafters-redis-go/pkg/commands"
 	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
 
 func main() {
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	rdbConfig := config.Load()
+
+	address := fmt.Sprintf("0.0.0.0:%s", rdbConfig.Port)
+	l, err := net.Listen("tcp", address)
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
@@ -26,20 +30,21 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			continue
 		}
-		go handleConnection(conn, memoryStorage)
+		go handleConnection(conn, memoryStorage, rdbConfig)
 	}
 }
 
-func handleConnection(conn net.Conn, storage storage.Storage) {
+func handleConnection(conn net.Conn, storage storage.Storage, rdbConfig *config.Config) {
 	defer conn.Close()
 
 	parser := resp.NewParser(conn)
 
 	commandMap := map[string]Command{
-		"PING": &commands.PingCommand{},
-		"ECHO": &commands.EchoCommand{},
-		"SET":  commands.NewSetCommand(storage),
-		"GET":  commands.NewGetCommand(storage),
+		"PING":   &commands.PingCommand{},
+		"ECHO":   &commands.EchoCommand{},
+		"SET":    commands.NewSetCommand(storage),
+		"GET":    commands.NewGetCommand(storage),
+		"CONFIG": commands.NewConfigCommand(rdbConfig),
 	}
 
 	for {

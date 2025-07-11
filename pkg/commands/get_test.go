@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetCommandExists(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
+	memoryStorage := storage.NewInMemory()
 	memoryStorage.Set("foo", "bar")
 
 	getCmd := NewGetCommand(memoryStorage)
@@ -27,7 +27,7 @@ func TestGetCommandExists(t *testing.T) {
 }
 
 func TestGetCommandNotExists(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
+	memoryStorage := storage.NewInMemory()
 	cmd := NewGetCommand(memoryStorage)
 	args := []resp.Value{
 		{Type: resp.BulkString, Bulk: "nonexistent"},

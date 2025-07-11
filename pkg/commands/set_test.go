@@ -9,7 +9,7 @@ import (
 )
 
 func TestSetCommand(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
+	memoryStorage := storage.NewInMemory()
 	cmd := NewSetCommand(memoryStorage)
 	args := []resp.Value{
 		{Type: resp.BulkString, Bulk: "foo"},
@@ -35,7 +35,7 @@ func TestSetCommand(t *testing.T) {
 }
 
 func TestSetCommandInvalidArgs(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
+	memoryStorage := storage.NewInMemory()
 	cmd := NewSetCommand(memoryStorage)
 	args := []resp.Value{
 		{Type: resp.BulkString, Bulk: "foo"},
@@ -49,7 +49,7 @@ func TestSetCommandInvalidArgs(t *testing.T) {
 }
 
 func TestSetCommandWithPX(t *testing.T) {
-	memoryStorage := storage.NewMemoryStorage()
+	memoryStorage := storage.NewInMemory()
 	cmd := NewSetCommand(memoryStorage)
 
 	args := []resp.Value{

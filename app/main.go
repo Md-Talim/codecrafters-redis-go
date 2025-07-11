@@ -22,7 +22,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	dataStorage := storage.NewStorage(rdbConfig)
+	dataStorage := storage.New(rdbConfig)
 
 	for {
 		conn, err := l.Accept()

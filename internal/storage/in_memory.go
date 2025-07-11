@@ -5,23 +5,25 @@ import (
 	"time"
 )
 
-type StorageItem struct {
+type Item struct {
 	Value     string
 	ExpriesAt *time.Time
 }
 
-func newStorageItem(value string, expiresAt *time.Time) *StorageItem {
-	return &StorageItem{value, expiresAt}
+type InMemory struct {
+	data   map[string]*Item
+	mu     sync.RWMutex
+	closer chan struct{}
 }
 
-type MemoryStorage struct {
-	data map[string]*StorageItem
-	mu   sync.RWMutex
+func newItem(value string, expiresAt *time.Time) *Item {
+	return &Item{value, expiresAt}
 }
 
-func NewMemoryStorage() *MemoryStorage {
-	storage := &MemoryStorage{
-		data: make(map[string]*StorageItem),
+func NewInMemory() *InMemory {
+	storage := &InMemory{
+		data:   make(map[string]*Item),
+		closer: make(chan struct{}),
 	}
 
 	go storage.cleanupExpiredKeys()
@@ -29,23 +31,23 @@ func NewMemoryStorage() *MemoryStorage {
 	return storage
 }
 
-func (m *MemoryStorage) Set(key, value string) error {
+func (m *InMemory) Set(key, value string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.data[key] = newStorageItem(value, nil)
+	m.data[key] = newItem(value, nil)
 	return nil
 }
 
-func (m *MemoryStorage) SetWithExpiry(key, value string, expiry time.Duration) error {
+func (m *InMemory) SetWithExpiry(key, value string, expiry time.Duration) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	expiryTime := time.Now().Add(expiry)
-	m.data[key] = newStorageItem(value, &expiryTime)
+	m.data[key] = newItem(value, &expiryTime)
 	return nil
 }
 
-func (m *MemoryStorage) Get(key string) (string, bool) {
+func (m *InMemory) Get(key string) (string, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -67,14 +69,14 @@ func (m *MemoryStorage) Get(key string) (string, bool) {
 	return item.Value, true
 }
 
-func (m *MemoryStorage) Delete(key string) error {
+func (m *InMemory) Delete(key string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.data, key)
 	return nil
 }
 
-func (m *MemoryStorage) Keys() []string {
+func (m *InMemory) Keys() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -91,19 +93,28 @@ func (m *MemoryStorage) Keys() []string {
 	return keys
 }
 
-func (m *MemoryStorage) cleanupExpiredKeys() {
+func (m *InMemory) Close() {
+	close(m.closer)
+}
+
+func (m *InMemory) cleanupExpiredKeys() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		m.mu.Lock()
-
-		for key, item := range m.data {
-			if item.ExpriesAt != nil && time.Now().After(*item.ExpriesAt) {
-				delete(m.data, key)
+	for {
+		select {
+		case <-ticker.C:
+			m.mu.Lock()
+			now := time.Now()
+			for key, item := range m.data {
+				if item.ExpriesAt != nil && now.After(*item.ExpriesAt) {
+					delete(m.data, key)
+				}
 			}
-		}
+			m.mu.Unlock()
 
-		m.mu.Unlock()
+		case <-m.closer:
+			return
+		}
 	}
 }

@@ -74,6 +74,23 @@ func (m *MemoryStorage) Delete(key string) error {
 	return nil
 }
 
+func (m *MemoryStorage) Keys() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	keys := make([]string, 0, len(m.data))
+	now := time.Now()
+
+	for key, item := range m.data {
+		if item.ExpriesAt != nil && now.After(*item.ExpriesAt) {
+			continue
+		}
+		keys = append(keys, key)
+	}
+
+	return keys
+}
+
 func (m *MemoryStorage) cleanupExpiredKeys() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()

@@ -22,7 +22,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	memoryStorage := storage.NewMemoryStorage()
+	dataStorage := storage.NewStorage(rdbConfig)
 
 	for {
 		conn, err := l.Accept()
@@ -30,7 +30,7 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			continue
 		}
-		go handleConnection(conn, memoryStorage, rdbConfig)
+		go handleConnection(conn, dataStorage, rdbConfig)
 	}
 }
 
@@ -44,6 +44,7 @@ func handleConnection(conn net.Conn, storage storage.Storage, rdbConfig *config.
 		"ECHO":   &commands.EchoCommand{},
 		"SET":    commands.NewSetCommand(storage),
 		"GET":    commands.NewGetCommand(storage),
+		"KEYS":   commands.NewKeysCommand(storage),
 		"CONFIG": commands.NewConfigCommand(rdbConfig),
 	}
 

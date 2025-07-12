@@ -1,19 +1,18 @@
 package commands
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/md-talim/codecrafters-redis-go/internal/config"
+	"github.com/md-talim/codecrafters-redis-go/internal/replica"
 	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
 
 type InfoCommand struct {
-	config *config.Config
+	replication *replica.Info
 }
 
-func NewInfoCommand(config *config.Config) *InfoCommand {
-	return &InfoCommand{config}
+func NewInfoCommand(replication *replica.Info) *InfoCommand {
+	return &InfoCommand{replication}
 }
 
 func (i *InfoCommand) Execute(args []resp.Value) *resp.Value {
@@ -42,11 +41,7 @@ func (i *InfoCommand) Execute(args []resp.Value) *resp.Value {
 }
 
 func (i *InfoCommand) getReplicationInfo() *resp.Value {
-	role := "master"
-	if i.config.IsReplica() {
-		role = "slave"
-	}
-	response := fmt.Sprintf("role:%s", role)
+	response := i.replication.InfoString()
 	return resp.NewBulkString(response)
 }
 

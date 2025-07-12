@@ -7,13 +7,19 @@ import (
 	"strings"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
+	"github.com/md-talim/codecrafters-redis-go/internal/replica"
 	"github.com/md-talim/codecrafters-redis-go/internal/storage"
 	"github.com/md-talim/codecrafters-redis-go/pkg/commands"
 	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
 
 func main() {
+	replInfo := replica.NewInfo()
 	rdbConfig := config.Load()
+
+	if rdbConfig.IsReplica() {
+		replInfo.SetAsSlave()
+	}
 
 	address := fmt.Sprintf("0.0.0.0:%s", rdbConfig.Port)
 	l, err := net.Listen("tcp", address)
@@ -30,11 +36,11 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			continue
 		}
-		go handleConnection(conn, dataStorage, rdbConfig)
+		go handleConnection(conn, dataStorage, rdbConfig, replInfo)
 	}
 }
 
-func handleConnection(conn net.Conn, storage storage.Storage, rdbConfig *config.Config) {
+func handleConnection(conn net.Conn, storage storage.Storage, rdbConfig *config.Config, replInfo *replica.Info) {
 	defer conn.Close()
 
 	parser := resp.NewParser(conn)
@@ -45,7 +51,7 @@ func handleConnection(conn net.Conn, storage storage.Storage, rdbConfig *config.
 		"SET":    commands.NewSetCommand(storage),
 		"GET":    commands.NewGetCommand(storage),
 		"KEYS":   commands.NewKeysCommand(storage),
-		"INFO":   commands.NewInfoCommand(rdbConfig),
+		"INFO":   commands.NewInfoCommand(replInfo),
 		"CONFIG": commands.NewConfigCommand(rdbConfig),
 	}
 

@@ -1,6 +1,7 @@
 package replica
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -13,13 +14,17 @@ const (
 )
 
 type Info struct {
-	mu   sync.RWMutex
-	role Role
+	mu               sync.RWMutex
+	role             Role
+	masterReplID     string
+	masterReplOffset int64
 }
 
 func NewInfo() *Info {
 	return &Info{
-		role: RoleMaster,
+		role:             RoleMaster,
+		masterReplID:     generateReplID(),
+		masterReplOffset: 0,
 	}
 }
 
@@ -41,7 +46,14 @@ func (i *Info) InfoString() string {
 
 	info := []string{
 		"role:" + string(i.role),
+		"master_replid:" + i.masterReplID,
+		"master_repl_offset:" + fmt.Sprintf("%d", i.masterReplOffset),
 	}
 
 	return strings.Join(info, "\r\n")
+}
+
+func generateReplID() string {
+	// Hardcoded repl id
+	return "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
 }

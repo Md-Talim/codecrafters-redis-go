@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
@@ -41,7 +42,11 @@ func (i *InfoCommand) Execute(args []resp.Value) *resp.Value {
 }
 
 func (i *InfoCommand) getReplicationInfo() *resp.Value {
-	response := "role:master"
+	role := "master"
+	if i.config.IsReplica() {
+		role = "slave"
+	}
+	response := fmt.Sprintf("role:%s", role)
 	return resp.NewBulkString(response)
 }
 

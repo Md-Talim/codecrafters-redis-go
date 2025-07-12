@@ -6,6 +6,7 @@ type Config struct {
 	Dir        string
 	DBFilename string
 	Port       string
+	ReplicaOf  string
 }
 
 var instance *Config
@@ -18,6 +19,7 @@ func Load() *Config {
 	dir := flag.String("dir", "/tmp", "Directory for RDB file")
 	dbfilename := flag.String("dbfilename", "dump.rdb", "RDB filename")
 	port := flag.String("port", "6379", "Port to listen on")
+	replicaOf := flag.String("replicaof", "", "Make this instance a replica of <host> <port>")
 
 	flag.Parse()
 
@@ -25,6 +27,7 @@ func Load() *Config {
 		Dir:        *dir,
 		DBFilename: *dbfilename,
 		Port:       *port,
+		ReplicaOf:  *replicaOf,
 	}
 
 	return instance
@@ -48,4 +51,8 @@ func (c *Config) GetParameter(param string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func (c *Config) IsReplica() bool {
+	return c.ReplicaOf != ""
 }

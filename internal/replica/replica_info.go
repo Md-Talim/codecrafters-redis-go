@@ -40,6 +40,10 @@ func (i *Info) Role() Role {
 	return i.role
 }
 
+func (i *Info) MasterReplID() string {
+	return i.masterReplID
+}
+
 func (i *Info) InfoString() string {
 	i.mu.RLock()
 	defer i.mu.RUnlock()

@@ -41,6 +41,7 @@ func NewRedisServer(config *config.Config) *RedisServer {
 		"INFO":     commands.NewInfoCommand(server.replicaInfo),
 		"KEYS":     commands.NewKeysCommand(server.storage),
 		"PING":     &commands.PingCommand{},
+		"PSYNC":    commands.NewPsyncCommand(replInfo),
 		"REPLCONF": &commands.ReplConfCommand{},
 		"SET":      commands.NewSetCommand(server.storage),
 	}

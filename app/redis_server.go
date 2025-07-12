@@ -153,6 +153,13 @@ func (s *RedisServer) performHandshake(host, port string) error {
 		fmt.Printf("Unexpected response from master: %+v\n", response)
 	}
 
+	// Send the PSYNC command
+	psyncCommand := "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n"
+	_, err = conn.Write([]byte(psyncCommand))
+	if err != nil {
+		return fmt.Errorf("failed to send PSYNC to master: %w", err)
+	}
+
 	return nil
 }
 

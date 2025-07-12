@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
 	"github.com/md-talim/codecrafters-redis-go/internal/replica"
@@ -47,6 +48,10 @@ func NewRedisServer(config *config.Config) *RedisServer {
 }
 
 func (s *RedisServer) Start() error {
+	if s.config.IsReplica() {
+		go s.connectToMaster()
+	}
+
 	address := fmt.Sprintf("0.0.0.0:%s", s.config.Port)
 	l, err := net.Listen("tcp", address)
 	if err != nil {
@@ -65,6 +70,57 @@ func (s *RedisServer) Start() error {
 
 		go s.handleConnection(conn)
 	}
+}
+
+func (s *RedisServer) connectToMaster() {
+	masterHost, masterPort := s.config.GetMasterHostPort()
+	if masterHost == "" || masterPort == "" {
+		fmt.Println("Invalid master host/port configuration")
+		return
+	}
+
+	for {
+		if err := s.performHandshake(masterHost, masterPort); err != nil {
+			fmt.Printf("Failed to connect to master %s:%s. Retrying in 5s...\n", masterHost, masterPort)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		break
+	}
+}
+
+func (s *RedisServer) performHandshake(host, port string) error {
+	masterAddr := net.JoinHostPort(host, port)
+	conn, err := net.Dial("tcp", masterAddr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to master: %w", err)
+	}
+	defer conn.Close()
+
+	fmt.Printf("Connected to master at %s\n", masterAddr)
+
+	// Send PING command
+	pingCommand := "*1\r\n$4\r\nPING\r\n"
+	_, err = conn.Write([]byte(pingCommand))
+	if err != nil {
+		return fmt.Errorf("failed to send PING to master: %w", err)
+	}
+	fmt.Println("Sent PING to master")
+
+	// Read response from master
+	parser := resp.NewParser(conn)
+	response, err := parser.Parse()
+	if err != nil {
+		return fmt.Errorf("failed to read PING response: %w", err)
+	}
+
+	if response.Type == resp.SimpleString && response.String == "PONG" {
+		fmt.Println("Received PONG from master")
+	} else {
+		fmt.Printf("Unexpected response from master: %+v\n", response)
+	}
+
+	return nil
 }
 
 func (s *RedisServer) handleConnection(conn net.Conn) {

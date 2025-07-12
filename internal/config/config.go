@@ -1,6 +1,9 @@
 package config
 
-import "flag"
+import (
+	"flag"
+	"strings"
+)
 
 type Config struct {
 	Dir        string
@@ -55,4 +58,17 @@ func (c *Config) GetParameter(param string) (string, bool) {
 
 func (c *Config) IsReplica() bool {
 	return c.ReplicaOf != ""
+}
+
+func (c *Config) GetMasterHostPort() (string, string) {
+	if !c.IsReplica() {
+		return "", ""
+	}
+
+	parts := strings.Fields(c.ReplicaOf)
+	if len(parts) != 2 {
+		return "", ""
+	}
+
+	return parts[0], parts[1]
 }

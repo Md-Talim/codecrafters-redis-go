@@ -120,6 +120,39 @@ func (s *RedisServer) performHandshake(host, port string) error {
 		fmt.Printf("Unexpected response from master: %+v\n", response)
 	}
 
+	// Send 2 REPLCONF command
+	replconfListeningPortCommand := "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n"
+	_, err = conn.Write([]byte(replconfListeningPortCommand))
+	if err != nil {
+		return fmt.Errorf("failed to send REPLCONF to master: %w", err)
+	}
+	response, err = parser.Parse()
+	if err != nil {
+		return fmt.Errorf("failed to read REPLCONF response: %w", err)
+	}
+
+	if response.Type == resp.SimpleString && response.String == "OK" {
+		fmt.Println("Received OK from master")
+	} else {
+		fmt.Printf("Unexpected response from master: %+v\n", response)
+	}
+
+	replconfCapabilitiesCommand := "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n"
+	_, err = conn.Write([]byte(replconfCapabilitiesCommand))
+	if err != nil {
+		return fmt.Errorf("failed to send REPLCONF to master: %w", err)
+	}
+	response, err = parser.Parse()
+	if err != nil {
+		return fmt.Errorf("failed to read REPLCONF response: %w", err)
+	}
+
+	if response.Type == resp.SimpleString && response.String == "OK" {
+		fmt.Println("Received OK from master")
+	} else {
+		fmt.Printf("Unexpected response from master: %+v\n", response)
+	}
+
 	return nil
 }
 

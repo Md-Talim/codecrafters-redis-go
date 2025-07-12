@@ -45,6 +45,7 @@ func handleConnection(conn net.Conn, storage storage.Storage, rdbConfig *config.
 		"SET":    commands.NewSetCommand(storage),
 		"GET":    commands.NewGetCommand(storage),
 		"KEYS":   commands.NewKeysCommand(storage),
+		"INFO":   commands.NewInfoCommand(rdbConfig),
 		"CONFIG": commands.NewConfigCommand(rdbConfig),
 	}
 

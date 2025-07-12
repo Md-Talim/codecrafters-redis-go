@@ -35,13 +35,14 @@ func NewRedisServer(config *config.Config) *RedisServer {
 		replicaInfo: replInfo,
 	}
 	server.commands = map[string]Command{
-		"CONFIG": commands.NewConfigCommand(server.config),
-		"ECHO":   &commands.EchoCommand{},
-		"GET":    commands.NewGetCommand(server.storage),
-		"INFO":   commands.NewInfoCommand(server.replicaInfo),
-		"KEYS":   commands.NewKeysCommand(server.storage),
-		"PING":   &commands.PingCommand{},
-		"SET":    commands.NewSetCommand(server.storage),
+		"CONFIG":   commands.NewConfigCommand(server.config),
+		"ECHO":     &commands.EchoCommand{},
+		"GET":      commands.NewGetCommand(server.storage),
+		"INFO":     commands.NewInfoCommand(server.replicaInfo),
+		"KEYS":     commands.NewKeysCommand(server.storage),
+		"PING":     &commands.PingCommand{},
+		"REPLCONF": &commands.ReplConfCommand{},
+		"SET":      commands.NewSetCommand(server.storage),
 	}
 
 	return server

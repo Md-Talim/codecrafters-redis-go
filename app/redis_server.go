@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
@@ -19,6 +20,13 @@ type RedisServer struct {
 	config      *config.Config
 	replicaInfo *replica.Info
 	commands    map[string]Command
+	replicas    map[string]*ReplicaConnection
+	replicasMu  sync.RWMutex
+}
+
+type ReplicaConnection struct {
+	conn net.Conn
+	id   string
 }
 
 func NewRedisServer(config *config.Config) *RedisServer {
@@ -33,6 +41,8 @@ func NewRedisServer(config *config.Config) *RedisServer {
 		storage:     dataStorage,
 		config:      config,
 		replicaInfo: replInfo,
+		replicas:    make(map[string]*ReplicaConnection),
+		replicasMu:  sync.RWMutex{},
 	}
 	server.commands = map[string]Command{
 		"CONFIG":   commands.NewConfigCommand(server.config),
@@ -170,6 +180,9 @@ func (s *RedisServer) handleConnection(conn net.Conn) {
 
 	parser := resp.NewParser(conn)
 
+	var isReplica bool
+	var replicaID string
+
 	for {
 		value, err := parser.Parse()
 		if err != nil {
@@ -187,13 +200,79 @@ func (s *RedisServer) handleConnection(conn net.Conn) {
 		commandName := strings.ToUpper(value.Array[0].Bulk)
 		args := value.Array[1:]
 
+		if commandName == "PSYNC" && !isReplica {
+			isReplica = true
+			replicaID = fmt.Sprintf("replica_%s_%d", conn.RemoteAddr().String(), time.Now().UnixNano())
+			s.addReplica(replicaID, conn)
+		}
+
 		if cmd, exists := s.commands[commandName]; exists {
 			response := cmd.Execute(args)
-			conn.Write([]byte(response.Serialize()))
+
+			if !isReplica || s.isHandshakeCommand(commandName) {
+				conn.Write([]byte(response.Serialize()))
+			}
+
+			if !isReplica && commandName == "SET" {
+				commandArray := make([]resp.Value, len(value.Array))
+				copy(commandArray, value.Array)
+				s.propagateCommand(commandArray)
+				continue
+			}
 		} else {
-			conn.Write([]byte(commands.UnknownCommandError(commandName).Serialize()))
+			if !isReplica {
+				conn.Write([]byte(commands.UnknownCommandError(commandName).Serialize()))
+			}
 		}
 	}
+
+	if isReplica && replicaID != "" {
+		s.removeReplica(replicaID)
+	}
+}
+
+func (s *RedisServer) addReplica(id string, conn net.Conn) {
+	s.replicasMu.Lock()
+	defer s.replicasMu.Unlock()
+	s.replicas[id] = &ReplicaConnection{conn, id}
+	fmt.Printf("Replica added: %s (total: %d)\n", id, len(s.replicas))
+}
+
+func (s *RedisServer) removeReplica(id string) {
+	s.replicasMu.Lock()
+	defer s.replicasMu.Unlock()
+	delete(s.replicas, id)
+	fmt.Printf("Replica removed: %s (total: %d)\n", id, len(s.replicas))
+}
+
+func (s *RedisServer) propagateCommand(command []resp.Value) {
+	if len(s.replicas) == 0 {
+		return
+	}
+
+	respCommand := &resp.Value{
+		Type:  resp.Array,
+		Array: command,
+	}
+	serializedCommand := respCommand.Serialize()
+
+	for id, replica := range s.replicas {
+		_, err := replica.conn.Write([]byte(serializedCommand))
+		if err != nil {
+			fmt.Printf("Failed to propogate command to replica %s: %v\n", id, err)
+		} else {
+			fmt.Printf("Propogated command to replica %s: %s\n", id, strings.TrimSpace(serializedCommand))
+		}
+	}
+}
+
+func (s *RedisServer) isHandshakeCommand(command string) bool {
+	handshakeCommands := map[string]bool{
+		"PING":     true,
+		"REPLCONF": true,
+		"PSYNC":    true,
+	}
+	return handshakeCommands[command]
 }
 
 type Command interface {

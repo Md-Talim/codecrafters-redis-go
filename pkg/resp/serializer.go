@@ -19,6 +19,10 @@ func (v *Value) Serialize() string {
 			result += item.Serialize()
 		}
 		return result
+	case RDBFile:
+		fullresync := NewSimpleString(v.String).Serialize()
+		rdbFile := fmt.Sprintf("$%d%s%s", len(v.RDBData), CRLF, string(v.RDBData))
+		return fullresync + rdbFile
 	default:
 		return ""
 	}

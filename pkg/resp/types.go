@@ -7,11 +7,13 @@ const (
 	SimpleError
 	BulkString
 	Array
+	RDBFile
 )
 
 type Value struct {
-	Type   Type
-	String string
-	Bulk   string
-	Array  []Value
+	Type    Type
+	String  string
+	Bulk    string
+	Array   []Value
+	RDBData []byte
 }

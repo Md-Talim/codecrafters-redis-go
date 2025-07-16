@@ -2,8 +2,6 @@ package server
 
 import (
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
-	"github.com/md-talim/codecrafters-redis-go/internal/replica"
-	"github.com/md-talim/codecrafters-redis-go/internal/storage"
 	"github.com/md-talim/codecrafters-redis-go/pkg/commands"
 	"github.com/md-talim/codecrafters-redis-go/pkg/network"
 	"github.com/md-talim/codecrafters-redis-go/pkg/replication"
@@ -15,26 +13,6 @@ type RedisServer struct {
 	connectionHandler  *network.ConnectionHandler
 	replicationManager *replication.Manager
 	commandRegistry    *commands.Registry
-}
-
-func NewRedisServer(config *config.Config) *RedisServer {
-	storage := storage.New(config)
-	replicaInfo := replica.NewInfo()
-
-	if config.IsReplica() {
-		replicaInfo.SetAsSlave()
-	}
-
-	commandsRegistry := commands.NewRegistry(storage, replicaInfo, config)
-	replicationManager := replication.NewManager(replicaInfo, config)
-
-	return &RedisServer{
-		config:             config,
-		networkListener:    network.NewTCPListener(config.Port),
-		replicationManager: replicationManager,
-		commandRegistry:    commandsRegistry,
-		connectionHandler:  network.NewConnectionHandler(commandsRegistry, replicationManager),
-	}
 }
 
 func (s *RedisServer) Start() error {

@@ -5,42 +5,48 @@ import (
 	"sync"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
-	"github.com/md-talim/codecrafters-redis-go/internal/replica"
 	"github.com/md-talim/codecrafters-redis-go/internal/storage"
 	"github.com/md-talim/codecrafters-redis-go/pkg/interfaces"
+	"github.com/md-talim/codecrafters-redis-go/pkg/replication"
 )
 
 type Registry struct {
+	storage           storage.Storage
+	replicaInfo       *replication.Info
+	config            *config.Config
 	commands          map[string]interfaces.CommandExecutor
 	writeCommands     map[string]bool
 	handshakeCommands map[string]bool
 	mu                sync.RWMutex
 }
 
-func NewRegistry(storage storage.Storage, replicaInfo *replica.Info, config *config.Config) *Registry {
+func NewRegistry(storage storage.Storage, replicaInfo *replication.Info, config *config.Config) *Registry {
 	registry := &Registry{
+		storage:           storage,
+		replicaInfo:       replicaInfo,
+		config:            config,
 		commands:          make(map[string]interfaces.CommandExecutor),
 		writeCommands:     make(map[string]bool),
 		handshakeCommands: make(map[string]bool),
 	}
 
-	registry.registerCommands(storage, replicaInfo, config)
+	registry.registerCommands()
 	registry.registerCommandTypes()
 
 	return registry
 }
 
-func (r *Registry) registerCommands(storage storage.Storage, replicaInfo *replica.Info, config *config.Config) {
+func (r *Registry) registerCommands() {
 	r.commands = map[string]interfaces.CommandExecutor{
-		"CONFIG":   NewConfigCommand(config),
+		"CONFIG":   NewConfigCommand(r.config),
 		"ECHO":     NewEchoCommand(),
-		"GET":      NewGetCommand(storage),
-		"INFO":     NewInfoCommand(replicaInfo),
-		"KEYS":     NewKeysCommand(storage),
+		"GET":      NewGetCommand(r.storage),
+		"INFO":     NewInfoCommand(r.replicaInfo),
+		"KEYS":     NewKeysCommand(r.storage),
 		"PING":     NewPingCommand(),
-		"PSYNC":    NewPsyncCommand(replicaInfo),
+		"PSYNC":    NewPsyncCommand(r.replicaInfo),
 		"REPLCONF": NewReplConfCommand(),
-		"SET":      NewSetCommand(storage),
+		"SET":      NewSetCommand(r.storage),
 	}
 }
 

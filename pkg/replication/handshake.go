@@ -71,27 +71,26 @@ func (h *Handshake) buildReplConfPortCommand() string {
 		len(port), port)
 }
 
-func (h *Handshake) Perform() error {
+func (h *Handshake) Perform() (net.Conn, error) {
 	masterHost, masterPort := h.config.GetMasterHostPort()
 	if masterHost == "" || masterPort == "" {
-		return fmt.Errorf("invalid master configuration")
+		return nil, fmt.Errorf("invalid master configuration")
 	}
 
 	conn, err := h.connectToMaster(masterHost, masterPort)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer conn.Close()
 
 	parser := resp.NewParser(conn)
 
 	for _, step := range h.steps {
 		if err := h.executeStep(conn, parser, step); err != nil {
-			return fmt.Errorf("step %s failed: %w", step.Name, err)
+			return nil, fmt.Errorf("step %s failed: %w", step.Name, err)
 		}
 	}
 
-	return nil
+	return conn, nil
 }
 
 func (h *Handshake) connectToMaster(host, port string) (net.Conn, error) {

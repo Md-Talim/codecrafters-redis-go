@@ -31,3 +31,7 @@ type CommandRegistry interface {
 	IsWriteCommand(name string) bool
 	IsHandshakeCommand(name string) bool
 }
+
+type CommandHandler interface {
+	ProcessCommand(args []resp.Value) error
+}

@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
-	"github.com/md-talim/codecrafters-redis-go/internal/replica"
 	"github.com/md-talim/codecrafters-redis-go/internal/storage"
 	"github.com/md-talim/codecrafters-redis-go/pkg/commands"
 	"github.com/md-talim/codecrafters-redis-go/pkg/network"
@@ -18,15 +17,14 @@ func NewBuilder(config *config.Config) *Builder {
 }
 
 func (b *Builder) Build() (*RedisServer, error) {
-	// Create core components
 	storage := storage.New(b.config)
-	replicaInfo := b.createReplicaInfo()
 
-	// Create managers
-	replicationManager := replication.NewManager(replicaInfo, b.config)
-	commandRegistry := commands.NewRegistry(storage, replicaInfo, b.config)
+	replicaProcessor := replication.NewReplicaCommandProcessor(nil)
+	replicationManager := replication.NewManager(b.config, replicaProcessor)
 
-	// Create network components
+	commandRegistry := commands.NewRegistry(storage, replicationManager.GetReplicationInfo(), b.config)
+	replicaProcessor.SetCommandRegistry(commandRegistry)
+
 	listener := network.NewTCPListener(b.config.Port)
 	connectionHandler := network.NewConnectionHandler(commandRegistry, replicationManager)
 
@@ -37,12 +35,4 @@ func (b *Builder) Build() (*RedisServer, error) {
 		replicationManager: replicationManager,
 		commandRegistry:    commandRegistry,
 	}, nil
-}
-
-func (b *Builder) createReplicaInfo() *replica.Info {
-	replicaInfo := replica.NewInfo()
-	if b.config.IsReplica() {
-		replicaInfo.SetAsSlave()
-	}
-	return replicaInfo
 }

@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/rdb"
-	"github.com/md-talim/codecrafters-redis-go/internal/replica"
+	"github.com/md-talim/codecrafters-redis-go/pkg/replication"
 	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
 
 type PsyncCommand struct {
-	replication *replica.Info
+	replication *replication.Info
 }
 
-func NewPsyncCommand(replication *replica.Info) *PsyncCommand {
+func NewPsyncCommand(replication *replication.Info) *PsyncCommand {
 	return &PsyncCommand{replication}
 }
 

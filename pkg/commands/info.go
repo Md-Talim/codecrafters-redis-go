@@ -3,15 +3,15 @@ package commands
 import (
 	"strings"
 
-	"github.com/md-talim/codecrafters-redis-go/internal/replica"
+	"github.com/md-talim/codecrafters-redis-go/pkg/replication"
 	"github.com/md-talim/codecrafters-redis-go/pkg/resp"
 )
 
 type InfoCommand struct {
-	replication *replica.Info
+	replication *replication.Info
 }
 
-func NewInfoCommand(replication *replica.Info) *InfoCommand {
+func NewInfoCommand(replication *replication.Info) *InfoCommand {
 	return &InfoCommand{replication}
 }
 

@@ -1,4 +1,4 @@
-package commands
+package core
 
 import (
 	"github.com/md-talim/codecrafters-redis-go/internal/resp"

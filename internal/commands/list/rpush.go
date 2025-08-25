@@ -16,7 +16,7 @@ func NewRPushCommand(storage store.Storage) *RPushCommand {
 }
 
 func (c *RPushCommand) Execute(args []resp.Value) resp.Value {
-	if len(args) != 2 {
+	if len(args) < 2 {
 		return WrongNumberOfArgumentsError("rpush")
 	}
 
@@ -42,6 +42,8 @@ func (c *RPushCommand) Execute(args []resp.Value) resp.Value {
 
 	list.Append(items)
 	c.storage.Set(key, list)
+
+	println("added")
 
 	return resp.NewInteger(fmt.Sprintf("%d", list.Size()))
 }

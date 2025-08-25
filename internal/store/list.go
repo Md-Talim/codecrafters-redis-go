@@ -8,8 +8,8 @@ func NewList() *List {
 	return &List{items: []any{}}
 }
 
-func (l *List) Append(item []any) {
-	l.items = append(l.items, item)
+func (l *List) Append(newItems []any) {
+	l.items = append(l.items, newItems...)
 }
 
 func (l *List) Size() int {

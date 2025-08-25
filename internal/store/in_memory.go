@@ -6,7 +6,7 @@ import (
 )
 
 type Item struct {
-	Value     string
+	Value     any
 	ExpriesAt *time.Time
 }
 
@@ -16,7 +16,7 @@ type InMemory struct {
 	closer chan struct{}
 }
 
-func newItem(value string, expiresAt *time.Time) *Item {
+func newItem(value any, expiresAt *time.Time) *Item {
 	return &Item{value, expiresAt}
 }
 
@@ -31,14 +31,14 @@ func NewInMemory() *InMemory {
 	return storage
 }
 
-func (m *InMemory) Set(key, value string) error {
+func (m *InMemory) Set(key string, value any) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.data[key] = newItem(value, nil)
 	return nil
 }
 
-func (m *InMemory) SetWithExpiry(key, value string, expiry time.Duration) error {
+func (m *InMemory) SetWithExpiry(key string, value any, expiry time.Duration) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -47,7 +47,7 @@ func (m *InMemory) SetWithExpiry(key, value string, expiry time.Duration) error 
 	return nil
 }
 
-func (m *InMemory) Get(key string) (string, bool) {
+func (m *InMemory) Get(key string) (any, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

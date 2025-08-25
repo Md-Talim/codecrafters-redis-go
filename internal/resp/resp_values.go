@@ -92,3 +92,17 @@ func (s *BulkString) Serialize() []byte {
 	}
 	return fmt.Appendf(nil, "$%d%s%s%s", len(s.value), CRLF, s.value, CRLF)
 }
+
+type Integer struct {
+	value string
+}
+
+func NewInteger(value string) *Integer {
+	return &Integer{value}
+}
+
+func (i *Integer) String() string { return i.value }
+
+func (i *Integer) Serialize() []byte {
+	return fmt.Appendf(nil, ":%s%s", i.value, CRLF)
+}

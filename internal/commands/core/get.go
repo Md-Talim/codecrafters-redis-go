@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/md-talim/codecrafters-redis-go/internal/resp"
 	"github.com/md-talim/codecrafters-redis-go/internal/store"
 )
@@ -24,7 +26,7 @@ func (g *GetCommand) Execute(args []resp.Value) resp.Value {
 		return resp.NewNullBulkString()
 	}
 
-	return resp.NewBulkString(value)
+	return resp.NewBulkString(fmt.Sprintf("%v", value))
 }
 
 func (g *GetCommand) Name() string {

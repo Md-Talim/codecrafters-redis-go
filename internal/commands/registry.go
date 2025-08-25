@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/md-talim/codecrafters-redis-go/internal/commands/core"
+	"github.com/md-talim/codecrafters-redis-go/internal/commands/list"
 	"github.com/md-talim/codecrafters-redis-go/internal/config"
 	"github.com/md-talim/codecrafters-redis-go/internal/resp"
 	"github.com/md-talim/codecrafters-redis-go/internal/store"
@@ -41,6 +42,7 @@ func (r *Registry) registerCommands() {
 		"KEYS":   core.NewKeysCommand(r.storage),
 		"PING":   core.NewPingCommand(),
 		"SET":    core.NewSetCommand(r.storage),
+		"RPUSH":  list.NewRPushCommand(r.storage),
 	}
 }
 

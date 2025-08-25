@@ -8,9 +8,9 @@ import (
 )
 
 type Storage interface {
-	Set(key, value string) error
-	SetWithExpiry(key, value string, expiry time.Duration) error
-	Get(key string) (string, bool)
+	Set(key string, value any) error
+	SetWithExpiry(key string, value any, expiry time.Duration) error
+	Get(key string) (any, bool)
 	Delete(key string) error
 	Keys() []string
 }

@@ -15,3 +15,7 @@ func (l *List) Append(newItems []any) {
 func (l *List) Size() int {
 	return len(l.items)
 }
+
+func (l *List) Range(start, stop int) []any {
+	return l.items[start:stop]
+}

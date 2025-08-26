@@ -43,6 +43,7 @@ func (r *Registry) registerCommands() {
 		"PING":   core.NewPingCommand(),
 		"SET":    core.NewSetCommand(r.storage),
 		"RPUSH":  list.NewRPushCommand(r.storage),
+		"LRANGE": list.NewLRangeCommand(r.storage),
 	}
 }
 

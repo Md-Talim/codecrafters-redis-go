@@ -3,6 +3,7 @@ package list
 import (
 	"strconv"
 
+	"github.com/md-talim/codecrafters-redis-go/internal/commands/core"
 	"github.com/md-talim/codecrafters-redis-go/internal/resp"
 	"github.com/md-talim/codecrafters-redis-go/internal/store"
 )
@@ -17,18 +18,18 @@ func NewLRangeCommand(storage store.Storage) *LRangeCommand {
 
 func (c *LRangeCommand) Execute(args []resp.Value) resp.Value {
 	if len(args) != 3 {
-		return WrongNumberOfArgumentsError("lrange")
+		return core.WrongNumberOfArgumentsError("lrange")
 	}
 
 	key := args[0].String()
 
 	start, err := strconv.Atoi(args[1].String())
 	if err != nil {
-		return resp.NewSimpleError("ERR value is not an integer or out of range")
+		return core.ValueNotIntegerError()
 	}
 	stop, err := strconv.Atoi(args[2].String())
 	if err != nil {
-		return resp.NewSimpleError("ERR value is not an integer or out of range")
+		return core.ValueNotIntegerError()
 	}
 
 	entry, exists := c.storage.Get(key)
@@ -38,7 +39,7 @@ func (c *LRangeCommand) Execute(args []resp.Value) resp.Value {
 
 	list, isList := entry.(*store.List)
 	if !isList {
-		return WrongTypeOperationError()
+		return core.WrongTypeOperationError()
 	}
 
 	size := list.Size()

@@ -29,3 +29,11 @@ func InvalidExpireTimeError(command string) resp.Value {
 func InvalidCommandFormatError() resp.Value {
 	return resp.NewSimpleError("ERR invalid command format")
 }
+
+func ValueNotIntegerError() resp.Value {
+	return resp.NewSimpleError("ERR value is not an integer or out of range")
+}
+
+func WrongTypeOperationError() resp.Value {
+	return resp.NewSimpleError("WRONGTYPE Operation against a key holding the wrong kind of value")
+}

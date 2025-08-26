@@ -21,11 +21,7 @@ func (c *RPushCommand) Execute(args []resp.Value) resp.Value {
 	}
 
 	key := args[0].String()
-	items := []any{}
-
-	for _, arg := range args[1:] {
-		items = append(items, arg.String())
-	}
+	items := args[1:]
 
 	entry, exists := c.storage.Get(key)
 	if !exists {
@@ -42,8 +38,6 @@ func (c *RPushCommand) Execute(args []resp.Value) resp.Value {
 
 	list.Append(items)
 	c.storage.Set(key, list)
-
-	println("added")
 
 	return resp.NewInteger(fmt.Sprintf("%d", list.Size()))
 }

@@ -22,9 +22,14 @@ func (c *LRangeCommand) Execute(args []resp.Value) resp.Value {
 
 	key := args[0].String()
 
-	// TODO: return error if start and stop are not integers
-	start, _ := strconv.Atoi(args[1].String())
-	stop, _ := strconv.Atoi(args[2].String())
+	start, err := strconv.Atoi(args[1].String())
+	if err != nil {
+		return resp.NewSimpleError("ERR value is not an integer or out of range")
+	}
+	stop, err := strconv.Atoi(args[2].String())
+	if err != nil {
+		return resp.NewSimpleError("ERR value is not an integer or out of range")
+	}
 
 	entry, exists := c.storage.Get(key)
 	if !exists {
@@ -54,11 +59,6 @@ func (c *LRangeCommand) Execute(args []resp.Value) resp.Value {
 	}
 
 	result := list.Range(start, stop+1)
-	responseArray := []resp.Value{}
 
-	for _, item := range result {
-		responseArray = append(responseArray, resp.NewBulkString(item.(string)))
-	}
-
-	return resp.NewArray(responseArray)
+	return resp.NewArray(result)
 }

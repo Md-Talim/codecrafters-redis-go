@@ -44,6 +44,7 @@ func (r *Registry) registerCommands() {
 		"SET":    core.NewSetCommand(r.storage),
 		"RPUSH":  list.NewRPushCommand(r.storage),
 		"LPUSH":  list.NewLPushCommand(r.storage),
+		"LPOP":   list.NewLPopCommand(r.storage),
 		"LRANGE": list.NewLRangeCommand(r.storage),
 		"LLEN":   list.NewLLenCommand(r.storage),
 	}

@@ -46,13 +46,15 @@ func (c *LPopCommand) Execute(args []resp.Value) resp.Value {
 	}
 
 	if count == 1 {
-		return list.Pop()
+		poppedElement := list.Pop()
+		return poppedElement
 	}
 
 	i := 1
 	poppedElements := []resp.Value{}
 	for i <= count && !list.IsEmpty() {
 		poppedElements = append(poppedElements, list.Pop())
+		i++
 	}
 
 	return resp.NewArray(poppedElements)

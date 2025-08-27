@@ -14,6 +14,12 @@ func (l *List) Append(newItems []resp.Value) {
 	l.items = append(l.items, newItems...)
 }
 
+func (l *List) Prepend(newItems []resp.Value) {
+	for _, item := range newItems {
+		l.items = append([]resp.Value{item}, l.items...)
+	}
+}
+
 func (l *List) Size() int {
 	return len(l.items)
 }
